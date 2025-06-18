@@ -26,6 +26,7 @@
   <script>
     const { remote, ipcRenderer } = require('electron');
     const { dialog } = remote;
+
     const browseBtn   = document.getElementById('browseBtn');
     const selectedDiv = document.getElementById('selectedFile');
     const qualitySel  = document.getElementById('quality');
@@ -34,26 +35,26 @@
     const progressText= document.getElementById('progressText');
     let filePath = null;
 
-    browseBtn.addEventListener('click', async () => {
+    browseBtn.onclick = async () => {
       const { canceled, filePaths } = await dialog.showOpenDialog({
-        filters: [{ name:'Videos',extensions:['mp4','mov'] }],
-        properties:['openFile']
+        filters: [{ name:'Videos', extensions:['mp4','mov'] }],
+        properties: ['openFile']
       });
       if (!canceled && filePaths.length) {
         filePath = filePaths[0];
         selectedDiv.textContent = `Selected: ${filePath}`;
       }
-    });
+    };
 
-    compressBtn.addEventListener('click', () => {
+    compressBtn.onclick = () => {
       if (!filePath) {
-        alert('Please select a video file first.');
+        alert('Please select a video first.');
         return;
       }
       progressBar.value = 0;
       progressText.textContent = '0%';
       ipcRenderer.send('start-compression', filePath, qualitySel.value);
-    });
+    };
 
     ipcRenderer.on('compression-progress', (e, pct) => {
       progressBar.value = pct;
@@ -64,7 +65,7 @@
       if (msg.startsWith('Error')) {
         alert('❌ ' + msg);
       } else {
-        alert('✅ Compression complete!\nOutput saved to:\n' + msg);
+        alert('✅ Compression complete!\nSaved to: ' + msg);
       }
     });
   </script>
