@@ -1,80 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Video Compressor UI</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Video Compressor</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    .dropzone {
+      border: 2px dashed #888; padding: 2rem; text-align: center;
+      margin-bottom: 1rem; border-radius: 8px;
+    }
+    .progress-bar {
+      width: 100%; height: 10px; background: #eee; margin-top: 1rem;
+      border-radius: 5px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; width: 0; background: green; transition: width .3s;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="dropzone" id="dropzone">
-      <div class="icon">☁️⬆️</div>
-      <div class="title">Upload Your Video</div>
-      <button>Browse Files</button>
-      <input type="file" id="videoFile" accept=".mp4,.mov">
-    </div>
+  <h2>Upload Your Video</h2>
+  <input type="file" id="videoInput" accept=".mp4,.mov"><br><br>
 
-    <div class="quality-group">
-      <h3>Select Compression Quality</h3>
-      <div class="cards">
-        <div class="card selected" data-quality="high"><h4>High Quality</h4></div>
-        <div class="card"        data-quality="medium"><h4>Medium Quality</h4></div>
-      </div>
-    </div>
+  <h3>Select Quality</h3>
+  <select id="qualitySelect">
+    <option value="high">High</option>
+    <option value="medium">Medium</option>
+  </select><br><br>
 
-    <button class="compress-btn" id="compressBtn">Compress Video</button>
+  <button id="compressBtn">Compress Video</button>
 
-    <div class="progress-container">
-      <div class="progress-label">Progress</div>
-      <div class="progress-bar">
-        <div id="progressFill" class="progress-fill"></div>
-      </div>
-    </div>
-  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 
   <script>
     const { ipcRenderer } = require('electron');
-    const dz           = document.getElementById('dropzone');
-    const fileInput    = document.getElementById('videoFile');
-    const cards        = document.querySelectorAll('.card');
-    const compressBtn  = document.getElementById('compressBtn');
+    const compressBtn = document.getElementById('compressBtn');
+    const videoInput = document.getElementById('videoInput');
+    const qualitySelect = document.getElementById('qualitySelect');
     const progressFill = document.getElementById('progressFill');
 
-    // Drag & drop
-    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('hover'); });
-    dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
-    dz.addEventListener('drop', e => {
-      e.preventDefault();
-      dz.classList.remove('hover');
-      fileInput.files = e.dataTransfer.files;
-    });
-    dz.querySelector('button').addEventListener('click', () => fileInput.click());
-
-    // Quality toggle
-    cards.forEach(c => c.addEventListener('click', () => {
-      cards.forEach(x => x.classList.remove('selected'));
-      c.classList.add('selected');
-    }));
-
-    // Receive progress updates
-    ipcRenderer.on('ffmpeg-progress', (e, pct) => {
-      progressFill.style.width = pct + '%';
-    });
-
-    // Compress on button click
-    compressBtn.addEventListener('click', async () => {
-      if (!fileInput.files.length) return alert('Select a video first.');
-      const file      = fileInput.files[0];
-      const quality   = document.querySelector('.card.selected').dataset.quality;
-      const inputPath = file.path;
-
-      progressFill.style.width = '0%';
-      try {
-        const out = await ipcRenderer.invoke('compress-video', { inputPath, quality });
-        alert('✅ Compression complete!\nSaved to:\n' + out);
-      } catch (err) {
-        alert('❌ Error:\n' + err);
+    compressBtn.onclick = async () => {
+      const file = videoInput.files[0];
+      if (!file || !file.path) {
+        alert('Please select a valid video file.');
+        return;
       }
+
+      const quality = qualitySelect.value;
+
+      try {
+        const output = await ipcRenderer.invoke('compress-video', {
+          filePath: file.path,
+          quality: quality
+        });
+        alert('✅ Compression complete!\nSaved to: ' + output);
+      } catch (err) {
+        alert('❌ Error: ' + err.message);
+      }
+    };
+
+    ipcRenderer.on('ffmpeg-progress', (e, percent) => {
+      progressFill.style.width = percent + '%';
     });
   </script>
 </body>
