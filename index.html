@@ -1,90 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <title>Video Compressor</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <!-- Upload zone -->
-    <div class="dropzone" id="dropzone">
-      <div class="icon">☁️⬆️</div>
-      <div class="title">Upload Your Video</div>
-      <button type="button">Browse Files</button>
-      <input type="file" id="videoFile" accept=".mp4,.mov">
-    </div>
+  <h1>Video Compressor</h1>
+  <!-- Dropzone for file upload -->
+  <div id="dropzone">Drag & Drop Video Here or Click to Select</div>
+  <input type="file" id="fileInput" accept="video/*" hidden>
 
-    <!-- Quality cards -->
-    <div class="quality-group">
-      <h3>Select Compression Quality</h3>
-      <div class="cards">
-        <div class="card selected" data-quality="high"><h4>High Quality</h4></div>
-        <div class="card" data-quality="medium"><h4>Medium Quality</h4></div>
-      </div>
-    </div>
+  <!-- Quality selector -->
+  <label for="quality">Quality:</label>
+  <select id="quality">
+    <option value="high">High</option>
+    <option value="medium">Medium</option>
+  </select>
+  <button id="compressBtn">Compress</button>
 
-    <!-- Compress button -->
-    <button class="compress-btn" id="compressBtn">Compress Video</button>
-
-    <!-- Progress bar -->
-    <div class="progress-container">
-      <div class="progress-label">Progress</div>
-      <div class="progress-bar">
-        <div id="progressFill" class="progress-fill"></div>
-      </div>
-    </div>
+  <!-- Progress bar -->
+  <div>
+    <progress id="progressBar" value="0" max="100"></progress>
+    <span id="progressText">0%</span>
   </div>
 
   <script>
-    const { ipcRenderer } = require('electron');
-    const dz           = document.getElementById('dropzone');
-    const fileInput    = document.getElementById('videoFile');
-    const cards        = document.querySelectorAll('.card');
-    const compressBtn  = document.getElementById('compressBtn');
-    const progressFill = document.getElementById('progressFill');
+    // Get DOM elements
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const qualitySelect = document.getElementById('quality');
+    const compressBtn = document.getElementById('compressBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
 
-    // Drag & drop
-    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('hover'); });
-    dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
-    dz.addEventListener('drop', e => {
+    let selectedFilePath = null;
+
+    // Highlight dropzone on drag over
+    dropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dz.classList.remove('hover');
-      if (e.dataTransfer.files.length) fileInput.files = e.dataTransfer.files;
+      dropzone.classList.add('dragover');
     });
-    dz.querySelector('button').addEventListener('click', () => fileInput.click());
-
-    // Card select
-    cards.forEach(c => c.addEventListener('click', () => {
-      cards.forEach(x => x.classList.remove('selected'));
-      c.classList.add('selected');
-    }));
-
-    // Receive progress events
-    ipcRenderer.on('ffmpeg-progress', (e, pct) => {
-      progressFill.style.width = pct + '%';
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
     });
 
-    // Compress click
-    compressBtn.addEventListener('click', async () => {
-      if (!fileInput.files.length) {
-        return alert('❌ Please select an MP4 or MOV file.');
+    // Handle file drop
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFile(e.dataTransfer.files[0]);
       }
-      const file = fileInput.files[0];
-      if (!file.path) {
-        return alert('❌ Cannot access file path. Drag‑and‑drop or re‑browse the file.');
+    });
+
+    // Click on dropzone to open file dialog
+    dropzone.addEventListener('click', () => fileInput.click());
+
+    // Handle file selection via input
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleFile(e.target.files[0]);
       }
-      const quality = document.querySelector('.card.selected').dataset.quality;
-      progressFill.style.width = '0%';
-      try {
-        const output = await ipcRenderer.invoke('compress-video', {
-          filePath: file.path,
-          quality
-        });
-        alert('✅ Done! Saved to:\n' + output);
-      } catch (err) {
-        alert('❌ Error: ' + err);
+    });
+
+    // Store selected file path
+    function handleFile(file) {
+      // In Electron, File objects have a `path` property (native path)
+      if (file.path) {
+        selectedFilePath = file.path;
+        dropzone.textContent = `Selected: ${file.name}`;
+      } else {
+        alert('Unable to get file path.');
       }
+    }
+
+    // On clicking Compress, send IPC to main process
+    compressBtn.addEventListener('click', () => {
+      if (!selectedFilePath) {
+        alert('Please select a video file first.');
+        return;
+      }
+      const quality = qualitySelect.value; // 'high' or 'medium'
+      // Reset progress UI
+      progressBar.value = 0;
+      progressText.textContent = '0%';
+      // Send path and quality to main process
+      window.electronAPI.startCompression(selectedFilePath, quality);
+    });
+
+    // Receive progress updates from main process
+    window.electronAPI.onProgress((percent) => {
+      progressBar.value = percent;
+      progressText.textContent = `${percent}%`;
+    });
+
+    // Receive completion notification from main process
+    window.electronAPI.onCompleted((outputPath) => {
+      alert('Compression complete!\nOutput saved to:\n' + outputPath);
     });
   </script>
 </body>
