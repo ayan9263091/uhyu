@@ -8,11 +8,9 @@
 <body>
   <h1>🎥 Video Compressor</h1>
 
-  <!-- Dropzone -->
-  <div id="dropzone">Drag & Drop Video Here<br>or Click to Select</div>
-  <input type="file" id="fileInput" accept=".mp4,.mov" hidden>
+  <button id="browseBtn">Browse Video</button>
+  <div id="selectedFile">No file selected</div>
 
-  <!-- Quality selector -->
   <label for="quality">Quality:</label>
   <select id="quality">
     <option value="high">High</option>
@@ -20,71 +18,49 @@
   </select>
   <button id="compressBtn">Compress</button>
 
-  <!-- Progress -->
   <div class="progress-wrapper">
     <progress id="progressBar" value="0" max="100"></progress>
     <span id="progressText">0%</span>
   </div>
 
   <script>
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('fileInput');
-    const quality = document.getElementById('quality');
+    const browseBtn   = document.getElementById('browseBtn');
+    const selectedDiv = document.getElementById('selectedFile');
+    const qualitySel  = document.getElementById('quality');
     const compressBtn = document.getElementById('compressBtn');
     const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    let selectedPath = null;
+    const progressText= document.getElementById('progressText');
 
-    // Drag/drop handlers
-    dropzone.addEventListener('dragover', e => {
-      e.preventDefault();
-      dropzone.classList.add('hover');
-    });
-    dropzone.addEventListener('dragleave', () => {
-      dropzone.classList.remove('hover');
-    });
-    dropzone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropzone.classList.remove('hover');
-      handleFile(e.dataTransfer.files[0]);
-    });
+    let filePath = null;
 
-    // Click to open dialog
-    dropzone.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
-
-    function handleFile(file) {
-      if (file && file.path) {
-        selectedPath = file.path;
-        dropzone.innerHTML = `Selected:<br>${file.name}`;
-      } else {
-        alert('Cannot access file path. Please drag‑and‑drop or reselect.');
+    browseBtn.addEventListener('click', async () => {
+      const path = await window.electronAPI.openFile();
+      if (path) {
+        filePath = path;
+        selectedDiv.textContent = `Selected: ${path}`;
       }
-    }
+    });
 
-    // Start compression
     compressBtn.addEventListener('click', () => {
-      if (!selectedPath) {
-        alert('Please select a video file first.');
+      if (!filePath) {
+        alert('Please browse and select a video first.');
         return;
       }
       progressBar.value = 0;
       progressText.textContent = '0%';
-      window.electronAPI.startCompression(selectedPath, quality.value);
+      window.electronAPI.startCompression(filePath, qualitySel.value);
     });
 
-    // Update progress
     window.electronAPI.onProgress(pct => {
       progressBar.value = pct;
       progressText.textContent = pct + '%';
     });
 
-    // Done!
-    window.electronAPI.onCompleted(out => {
-      if (out.startsWith('Error')) {
-        alert('❌ ' + out);
+    window.electronAPI.onCompleted(message => {
+      if (message.startsWith('Error')) {
+        alert('❌ ' + message);
       } else {
-        alert('✅ Compression complete!\nOutput saved to:\n' + out);
+        alert('✅ Compression complete!\nOutput saved to:\n' + message);
       }
     });
   </script>
