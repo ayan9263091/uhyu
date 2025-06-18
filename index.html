@@ -24,43 +24,47 @@
   </div>
 
   <script>
+    const { remote, ipcRenderer } = require('electron');
+    const { dialog } = remote;
     const browseBtn   = document.getElementById('browseBtn');
     const selectedDiv = document.getElementById('selectedFile');
     const qualitySel  = document.getElementById('quality');
     const compressBtn = document.getElementById('compressBtn');
     const progressBar = document.getElementById('progressBar');
     const progressText= document.getElementById('progressText');
-
     let filePath = null;
 
     browseBtn.addEventListener('click', async () => {
-      const path = await window.electronAPI.openFile();
-      if (path) {
-        filePath = path;
-        selectedDiv.textContent = `Selected: ${path}`;
+      const { canceled, filePaths } = await dialog.showOpenDialog({
+        filters: [{ name:'Videos',extensions:['mp4','mov'] }],
+        properties:['openFile']
+      });
+      if (!canceled && filePaths.length) {
+        filePath = filePaths[0];
+        selectedDiv.textContent = `Selected: ${filePath}`;
       }
     });
 
     compressBtn.addEventListener('click', () => {
       if (!filePath) {
-        alert('Please browse and select a video first.');
+        alert('Please select a video file first.');
         return;
       }
       progressBar.value = 0;
       progressText.textContent = '0%';
-      window.electronAPI.startCompression(filePath, qualitySel.value);
+      ipcRenderer.send('start-compression', filePath, qualitySel.value);
     });
 
-    window.electronAPI.onProgress(pct => {
+    ipcRenderer.on('compression-progress', (e, pct) => {
       progressBar.value = pct;
       progressText.textContent = pct + '%';
     });
 
-    window.electronAPI.onCompleted(message => {
-      if (message.startsWith('Error')) {
-        alert('❌ ' + message);
+    ipcRenderer.on('compression-done', (e, msg) => {
+      if (msg.startsWith('Error')) {
+        alert('❌ ' + msg);
       } else {
-        alert('✅ Compression complete!\nOutput saved to:\n' + message);
+        alert('✅ Compression complete!\nOutput saved to:\n' + msg);
       }
     });
   </script>
