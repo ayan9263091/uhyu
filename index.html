@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Video Compressor UI</title>
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval'">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Upload zone -->
+    <div class="dropzone" id="dropzone">
+      <div class="icon">☁️⬆️</div>
+      <div class="title">Upload Your Video</div>
+      <button type="button">Browse Files</button>
+      <input type="file" id="videoFile" accept=".mp4,.mov">
+    </div>
+
+    <!-- Quality cards -->
+    <div class="quality-group">
+      <h3>Select Compression Quality</h3>
+      <div class="cards">
+        <div class="card selected" data-quality="high">
+          <h4>High Quality</h4>
+        </div>
+        <div class="card" data-quality="medium">
+          <h4>Medium Quality</h4>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compress button -->
+    <button class="compress-btn" id="compressBtn">Compress Video</button>
+
+    <!-- Progress bar -->
+    <div class="progress-container">
+      <div class="progress-label">Progress</div>
+      <div class="progress-bar">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    const dz = document.getElementById('dropzone');
+    const fileInput = document.getElementById('videoFile');
+    const cards = document.querySelectorAll('.card');
+    const compressBtn = document.getElementById('compressBtn');
+    const progressFill = document.getElementById('progressFill');
+
+    // Drag & drop styles
+    dz.addEventListener('dragover', e => { 
+      e.preventDefault(); 
+      dz.classList.add('hover'); 
+    });
+    dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault();
+      dz.classList.remove('hover');
+      if (e.dataTransfer.files[0]) fileInput.files = e.dataTransfer.files;
+    });
+
+    // Browse button
+    dz.querySelector('button').addEventListener('click', () => fileInput.click());
+
+    // Quality card toggle
+    cards.forEach(c => c.addEventListener('click', () => {
+      cards.forEach(x => x.classList.remove('selected'));
+      c.classList.add('selected');
+    }));
+
+    // Compress action
+    compressBtn.addEventListener('click', async () => {
+      if (!fileInput.files.length) {
+        alert('Please select a video file.');
+        return;
+      }
+
+      const file      = fileInput.files[0];
+      const quality   = document.querySelector('.card.selected').dataset.quality;
+      const inputPath = file.path;
+
+      // Show initial progress
+      progressFill.style.width = '0%';
+      setTimeout(() => progressFill.style.width = '30%', 100);
+
+      try {
+        const outputPath = await ipcRenderer.invoke('compress-video', { inputPath, quality });
+        progressFill.style.width = '100%';
+        alert('✅ Done!\nSaved to: ' + outputPath);
+      } catch (err) {
+        alert('❌ Error:\n' + err);
+      }
+    });
+  </script>
+</body>
+</html>
