@@ -1,5 +1,5 @@
 {
-  "name": "video-compressor",
+  "name": "video-compressor-app",
   "version": "1.0.0",
   "description": "Offline Video Compressor",
   "main": "main.js",
