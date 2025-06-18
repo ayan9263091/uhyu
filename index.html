@@ -14,81 +14,89 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: sans-serif; background: #fff; color: var(--color-text);
-      padding: 2rem; display: flex; justify-content: center;
+      font-family: sans-serif;
+      background: #fff;
+      color: var(--color-text);
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
     }
     .container {
-      max-width: 600px; width:100%; border:2px solid var(--color-gold);
-      border-radius:8px; padding:1.5rem; background:#fff;
+      max-width: 600px;
+      width: 100%;
+      border: 2px solid var(--color-gold);
+      border-radius: 8px;
+      padding: 1.5rem;
+      background: #fff;
     }
-    /* Dropzone */
     .dropzone {
-      border:2px dashed var(--color-dashed); background:var(--color-bg-drop);
-      padding:3rem; text-align:center; border-radius:8px;
-      position:relative; cursor:pointer; transition:background .2s;
+      border: 2px dashed var(--color-dashed);
+      background: var(--color-bg-drop);
+      padding: 3rem;
+      text-align: center;
+      border-radius: 8px;
+      position: relative;
+      cursor: pointer;
+      transition: background .2s;
     }
-    .dropzone.hover { background:rgba(194,190,80,0.2); }
+    .dropzone.hover { background: rgba(194,190,80,0.2); }
     .dropzone input {
-      position:absolute; top:0; left:0; right:0; bottom:0;
+      position: absolute; top:0; left:0; right:0; bottom:0;
       width:100%; height:100%; opacity:0; cursor:pointer;
     }
-    .dropzone .icon { font-size:2.5rem; color:var(--color-gold); margin-bottom:1rem; }
-    .dropzone .title { font-weight:bold; margin-bottom:.5rem; }
+    .dropzone .icon { font-size: 2.5rem; color: var(--color-gold); margin-bottom:1rem; }
+    .dropzone .title { font-weight: bold; margin-bottom: .5rem; }
     .dropzone button {
-      background:var(--color-primary); color:#fff; border:none;
-      padding:.75rem 1.5rem; border-radius:4px; font-size:1rem;
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      padding: .75rem 1.5rem;
+      border-radius: 4px;
+      font-size: 1rem;
     }
-    /* Quality cards */
-    .quality-group { margin:2rem 0 1rem; }
-    .cards { display:flex; gap:1rem; }
+    .quality-group { margin: 2rem 0 1rem; }
+    .cards { display: flex; gap: 1rem; }
     .card {
-      flex:1; border:2px solid var(--color-card);
-      border-radius:6px; padding:1rem; text-align:center;
-      cursor:pointer; transition:border-color .2s,background .2s;
+      flex: 1;
+      border: 2px solid var(--color-card);
+      border-radius: 6px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
     }
     .card.selected {
-      border-color:var(--color-primary);
-      background:rgba(0,0,0,0.1);
+      border-color: var(--color-primary);
+      background: rgba(0,0,0,0.1);
     }
     .card h4 { margin-bottom:.5rem; }
-    /* Compress button */
     .compress-btn {
-      width:100%; padding:1rem; margin-top:2rem;
-      background:var(--color-primary); color:#fff;
-      border:2px solid var(--color-primary); border-radius:4px;
-      font-size:1.1rem; cursor:pointer;
+      width:100%;
+      padding:1rem;
+      margin-top:2rem;
+      background: var(--color-primary);
+      color:#fff;
+      border:2px solid var(--color-primary);
+      border-radius:4px;
+      font-size:1.1rem;
+      cursor:pointer;
     }
     .compress-btn:hover { opacity:.9; }
-
-    /* Circular progress */
     .progress-container {
-      display:flex; justify-content:space-around;
-      margin-top:2rem;
+      display: flex;
+      justify-content: space-around;
+      margin-top: 2rem;
     }
-    .progress-item { text-align:center; }
-    .progress-item .progress-label { margin-bottom:.5rem; }
-    .progress-circle {
-      width:120px; height:120px; display:block; margin:auto;
-    }
-    .progress-circle .bg {
-      fill:none; stroke:#eee; stroke-width:12;
-    }
-    .progress-circle .progress {
-      fill:none; stroke:var(--color-primary); stroke-width:12;
-      stroke-linecap:round;
-      transform:rotate(-90deg); transform-origin:60px 60px;
-      stroke-dasharray:339.292; stroke-dashoffset:339.292;
-      transition:stroke-dashoffset .2s;
-    }
-    .progress-circle .progress-text {
-      font-size:1.2rem; text-anchor:middle;
-      dominant-baseline:middle; fill:var(--color-text);
+    .progress-item { text-align: center; }
+    .progress-item .progress-label { margin-bottom:.5rem; font-size:.9rem; }
+    #uploadCircle, #downloadCircle {
+      width: 120px; height: 120px; margin: auto;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/progressbar.js"></script>
 </head>
 <body>
   <div class="container">
-    <!-- Upload zone -->
     <div class="dropzone" id="dropzone">
       <div class="icon">☁️⬆️</div>
       <div class="title">Upload Your Video</div>
@@ -96,7 +104,6 @@
       <input type="file" id="videoFile" name="video" accept=".mp4,.mov">
     </div>
 
-    <!-- Quality cards -->
     <div class="quality-group">
       <h3>Select Compression Quality</h3>
       <div class="cards">
@@ -105,45 +112,38 @@
       </div>
     </div>
 
-    <!-- Compress button -->
     <button class="compress-btn" id="compressBtn">Compress Video</button>
 
-    <!-- Circular Progress bars -->
     <div class="progress-container">
       <div class="progress-item">
         <div class="progress-label">Upload Progress</div>
-        <svg id="uploadSvg" class="progress-circle" viewBox="0 0 120 120">
-          <circle class="bg" cx="60" cy="60" r="54"></circle>
-          <circle class="progress" cx="60" cy="60" r="54"></circle>
-          <text class="progress-text" x="60" y="60">0%</text>
-        </svg>
+        <div id="uploadCircle"></div>
       </div>
       <div class="progress-item">
         <div class="progress-label">Download Progress</div>
-        <svg id="downloadSvg" class="progress-circle" viewBox="0 0 120 120">
-          <circle class="bg" cx="60" cy="60" r="54"></circle>
-          <circle class="progress" cx="60" cy="60" r="54"></circle>
-          <text class="progress-text" x="60" y="60">0%</text>
-        </svg>
+        <div id="downloadCircle"></div>
       </div>
     </div>
   </div>
 
   <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const dz = document.getElementById('dropzone');
-    const fileInput = document.getElementById('videoFile');
-    const cards = document.querySelectorAll('.card');
+    const fileInput   = document.getElementById('videoFile');
+    const cards       = document.querySelectorAll('.card');
     const compressBtn = document.getElementById('compressBtn');
 
-    // SVG elements
-    const uploadCircle = document.querySelector('#uploadSvg .progress');
-    const uploadText   = document.querySelector('#uploadSvg .progress-text');
-    const downloadCircle = document.querySelector('#downloadSvg .progress');
-    const downloadText   = document.querySelector('#downloadSvg .progress-text');
-    const circumference = 2 * Math.PI * 54;  // r = 54
+    // Init ProgressBar.js circles
+    const uploadBar = new ProgressBar.Circle('#uploadCircle', {
+      strokeWidth: 6, color: '#000', trailColor: '#eee', trailWidth: 6,
+      text: { value: '0%' }, svgStyle: null
+    });
+    const downloadBar = new ProgressBar.Circle('#downloadCircle', {
+      strokeWidth: 6, color: '#000', trailColor: '#eee', trailWidth: 6,
+      text: { value: '0%' }, svgStyle: null
+    });
 
     // Dropzone handlers
+    const dz = document.getElementById('dropzone');
     dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('hover'); });
     dz.addEventListener('dragleave', () => dz.classList.remove('hover'));
     dz.addEventListener('drop', e => {
@@ -158,20 +158,18 @@
       c.classList.add('selected');
     }));
 
-    // Compress handler
+    // Compression logic
     compressBtn.addEventListener('click', () => {
       if (!fileInput.files.length) return alert('Please select a video first.');
-      const file = fileInput.files[0];
+
+      const file    = fileInput.files[0];
       const quality = document.querySelector('.card.selected').dataset.quality;
       const formData = new FormData();
       formData.append('video', file);
       formData.append('quality', quality);
 
-      // Reset circles
-      uploadCircle.style.strokeDashoffset = circumference;
-      uploadText.textContent = '0%';
-      downloadCircle.style.strokeDashoffset = circumference;
-      downloadText.textContent = '0%';
+      uploadBar.set(0);   uploadBar.setText('0%');
+      downloadBar.set(0); downloadBar.setText('0%');
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '/compress');
@@ -179,10 +177,9 @@
       // Upload progress
       xhr.upload.onprogress = e => {
         if (e.lengthComputable) {
-          const pct = Math.round(e.loaded / e.total * 100);
-          const offset = circumference * (1 - pct / 100);
-          uploadCircle.style.strokeDashoffset = offset;
-          uploadText.textContent = pct + '%';
+          const pct = e.loaded / e.total;
+          uploadBar.set(pct);
+          uploadBar.setText(Math.round(pct * 100) + '%');
         }
       };
 
@@ -191,19 +188,18 @@
       xhr.onprogress = e => {
         const ct = xhr.getResponseHeader('Content-Length');
         if (ct) {
-          const pct = Math.round(e.loaded / ct * 100);
-          const offset = circumference * (1 - pct / 100);
-          downloadCircle.style.strokeDashoffset = offset;
-          downloadText.textContent = pct + '%';
+          const pct = e.loaded / ct;
+          downloadBar.set(pct);
+          downloadBar.setText(Math.round(pct * 100) + '%');
         }
       };
 
       xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
+        if (xhr.status >=200 && xhr.status<300) {
           const blob = xhr.response;
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          const ext = file.name.split('.').pop();
+          const a    = document.createElement('a');
+          a.href     = URL.createObjectURL(blob);
+          const ext  = file.name.split('.').pop();
           a.download = `compressed_${quality}.${ext}`;
           a.click();
         } else {
