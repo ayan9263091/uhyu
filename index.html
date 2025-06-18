@@ -1,73 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Video Compressor</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Video Compressor UI</title>
+  <style>
+    /* Your entire custom CSS code goes here */
+    /* Already provided in earlier messages, paste it here */
+  </style>
 </head>
 <body>
-  <h1>🎥 Video Compressor</h1>
+  <div class="container">
+    <!-- Upload zone -->
+    <div class="dropzone" id="dropzone">
+      <div class="icon">☁️⬆️</div>
+      <div class="title">Upload Your Video</div>
+      <button type="button">Browse Files</button>
+      <input type="file" id="videoFile" accept=".mp4,.mov">
+    </div>
 
-  <button id="browseBtn">Browse Video</button>
-  <div id="selectedFile">No file selected</div>
+    <!-- Quality selection -->
+    <div class="quality-group">
+      <h3>Select Compression Quality</h3>
+      <div class="cards">
+        <div class="card selected" data-quality="high"><h4>High Quality</h4></div>
+        <div class="card" data-quality="medium"><h4>Medium Quality</h4></div>
+      </div>
+    </div>
 
-  <label for="quality">Quality:</label>
-  <select id="quality">
-    <option value="high">High</option>
-    <option value="medium">Medium</option>
-  </select>
-  <button id="compressBtn">Compress</button>
-
-  <div class="progress-wrapper">
-    <progress id="progressBar" value="0" max="100"></progress>
-    <span id="progressText">0%</span>
-  </div>
-
-  <script>
-    const { remote, ipcRenderer } = require('electron');
-    const { dialog } = remote;
-
-    const browseBtn   = document.getElementById('browseBtn');
-    const selectedDiv = document.getElementById('selectedFile');
-    const qualitySel  = document.getElementById('quality');
-    const compressBtn = document.getElementById('compressBtn');
-    const progressBar = document.getElementById('progressBar');
-    const progressText= document.getElementById('progressText');
-    let filePath = null;
-
-    browseBtn.onclick = async () => {
-      const { canceled, filePaths } = await dialog.showOpenDialog({
-        filters: [{ name:'Videos', extensions:['mp4','mov'] }],
-        properties: ['openFile']
-      });
-      if (!canceled && filePaths.length) {
-        filePath = filePaths[0];
-        selectedDiv.textContent = `Selected: ${filePath}`;
-      }
-    };
-
-    compressBtn.onclick = () => {
-      if (!filePath) {
-        alert('Please select a video first.');
-        return;
-      }
-      progressBar.value = 0;
-      progressText.textContent = '0%';
-      ipcRenderer.send('start-compression', filePath, qualitySel.value);
-    };
-
-    ipcRenderer.on('compression-progress', (e, pct) => {
-      progressBar.value = pct;
-      progressText.textContent = pct + '%';
-    });
-
-    ipcRenderer.on('compression-done', (e, msg) => {
-      if (msg.startsWith('Error')) {
-        alert('❌ ' + msg);
-      } else {
-        alert('✅ Compression complete!\nSaved to: ' + msg);
-      }
-    });
-  </script>
-</body>
-</html>
+    <!-- Compress Button -->
+    <button class="compress-btn" id
