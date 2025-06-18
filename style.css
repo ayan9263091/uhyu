@@ -12,7 +12,9 @@ body {
   margin: 10px 0;
   font-style: italic;
 }
-.progress-wrapper { margin-top: 20px; }
+.progress-wrapper {
+  margin-top: 20px;
+}
 progress {
   width: 60%;
   height: 20px;
