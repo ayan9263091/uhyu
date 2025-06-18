@@ -1,19 +1,18 @@
 body {
   font-family: Arial, sans-serif;
-  padding: 20px;
   text-align: center;
+  padding: 20px;
 }
 #browseBtn, #compressBtn {
   margin: 10px;
   padding: 8px 16px;
+  font-size: 14px;
 }
 #selectedFile {
   margin: 10px 0;
   font-style: italic;
 }
-.progress-wrapper {
-  margin-top: 20px;
-}
+.progress-wrapper { margin-top: 20px; }
 progress {
   width: 60%;
   height: 20px;
