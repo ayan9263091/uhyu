@@ -1,11 +1,12 @@
 {
-  "name": "electron-video-compressor",
+  "name": "video-compressor-app",
   "version": "1.0.0",
+  "description": "Offline Electron Video Compressor",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
   },
-  "dependencies": {
-    "electron": "^20.0.0"
+  "devDependencies": {
+    "electron": "^36.5.0"
   }
 }
