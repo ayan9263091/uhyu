@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -21,17 +21,29 @@ app.on('window-all-closed', () => app.quit());
 // Parse "HH:MM:SS.xx" into seconds
 function parseDuration(str) {
   const [h, m, s] = str.split(':');
-  return Number(h) * 3600 + Number(m) * 60 + parseFloat(s);
+  return Number(h)*3600 + Number(m)*60 + parseFloat(s);
 }
+
+// Handle “Browse” dialog request
+ipcMain.handle('dialog:openFile', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    filters: [
+      { name: 'Videos', extensions: ['mp4','mov'] }
+    ],
+    properties: ['openFile']
+  });
+  if (canceled) return null;
+  return filePaths[0];
+});
 
 ipcMain.on('start-compression', (event, filePath, quality) => {
   const win = BrowserWindow.getFocusedWindow();
   const { dir, name, ext } = path.parse(filePath);
   const outputName = `compressed_${quality}_${name}${ext}`;
   const outputPath = path.join(dir, outputName);
-  const ffmpegPath = path.join(__dirname, 'ffmpeg.exe'); // ensure this exists
+  const ffmpegPath = path.join(__dirname, 'ffmpeg.exe');
 
-  // 1) Probe duration
+  // 1) Probe for duration
   let probeOutput = '';
   const probe = spawn(ffmpegPath, ['-i', filePath]);
   probe.stderr.on('data', d => probeOutput += d.toString());
@@ -39,47 +51,41 @@ ipcMain.on('start-compression', (event, filePath, quality) => {
     const m = probeOutput.match(/Duration: (\d+:\d+:\d+\.\d+)/);
     const durationSec = m ? parseDuration(m[1]) : 0;
 
-    // 2) Build encode args
-    const vbr    = quality === 'high' ? '2000k' : '800k';
-    const abr    = quality === 'high' ? '128k'  : '96k';
-    const preset = quality === 'high' ? 'slow'   : 'medium';
+    // 2) Encode with progress
+    const vbr = quality==='high' ? '2000k' : '800k';
+    const abr = quality==='high' ? '128k' : '96k';
+    const preset = quality==='high' ? 'slow' : 'medium';
     const args = [
       '-y',
-      '-progress', 'pipe:1',
-      '-nostats',
+      '-progress','pipe:1','-nostats',
       '-i', filePath,
-      '-c:v', 'libx264',
-      '-preset', preset,
-      '-b:v', vbr,
-      '-c:a', 'aac',
-      '-b:a', abr,
+      '-c:v','libx264','-preset',preset,'-b:v',vbr,
+      '-c:a','aac','-b:a',abr,
       outputPath
     ];
-
     const ff = spawn(ffmpegPath, args);
-    let buffer = '';
+    let buf = '';
     ff.stdout.on('data', chunk => {
-      buffer += chunk.toString();
-      const lines = buffer.split(/\r?\n/);
-      buffer = lines.pop();
+      buf += chunk.toString();
+      const lines = buf.split(/\r?\n/);
+      buf = lines.pop();
       const info = {};
       for (const line of lines) {
-        const [k, v] = line.split('=');
+        const [k,v] = line.split('=');
         if (k && v) info[k.trim()] = v.trim();
       }
       if (info.out_time_ms && durationSec > 0) {
-        const t = Number(info.out_time_ms) / 1e6;
-        const pct = Math.min(100, Math.floor((t / durationSec) * 100));
+        const t = Number(info.out_time_ms)/1e6;
+        const pct = Math.min(100, Math.floor(t/durationSec*100));
         win.webContents.send('compression-progress', pct);
       }
-      if (info.progress === 'end') {
+      if (info.progress==='end') {
         win.webContents.send('compression-progress', 100);
       }
     });
-
     ff.on('close', code => {
-      if (code === 0) win.webContents.send('compression-done', outputPath);
-      else            win.webContents.send('compression-done', `Error code ${code}`);
+      if (code===0) win.webContents.send('compression-done', outputPath);
+      else          win.webContents.send('compression-done', `Error code ${code}`);
     });
   });
 });
